@@ -80,10 +80,10 @@ SOLO_MAX_K      = 1200
 # SISTEMA ANTI-MONOPOLIO (4 TIERS ADAPTATIVOS)
 # =========================
 # Ajustamos los mínimos para expandir la clase media y capturar la oligarquía real
-TIER_CUSPIDE_MIN = 120_000  # Captura a los dueños absolutos del server en el clúster
-TIER_ELITE_MIN   =  50_000  # Controla a los farmeadores fuertes antes del monopolio
-TIER_MEDIO_MIN   =  15_000  # El piso real del jugador promedio activo en i2 e i3
-                             # < 15k → Pueblo / Recién llegados
+TIER_CUSPIDE_MIN = 300_000  # Solo los monopolistas absolutos (PlayerOne y PlayerTwo)
+TIER_ELITE_MIN   = 120_000  # Jugadores muy activos en el clúster
+TIER_MEDIO_MIN   =  40_000  # El piso del jugador promedio activo
+                             # < 40k → Pueblo / Casuales / Inactivos
 
 # Multiplicadores suavizados (Psicología de progresión sana)
 MULTIPLICADOR_CUSPIDE = 0.65  # Impuesto aduanero del 35% (Retiene sin deprimir)
