@@ -38,6 +38,7 @@ from balance import (
     obtener_cargas_fortuna, modificar_cargas_fortuna,
     obtener_cargas_maldicion, modificar_cargas_maldicion,
     ejecutar_castigo_sql,
+    actualizar_balances_lote, obtener_balances_globales_lote,
     INSTANCIAS
 )
 
@@ -712,7 +713,7 @@ async def set_instancia(ctx, instancia: str):
 
     # Regex: captura (user_id) y el kakera TOTAL (segundo número)
     patron = re.compile(r'\((\d+)\).*?/\s*([\d.]+)')
-    registrados = []
+    lista_tuplas = []
     errores = []
 
     for linea in lineas:
@@ -728,17 +729,37 @@ async def set_instancia(ctx, instancia: str):
         user_id = int(match.group(1))
         # Los puntos son separadores de miles en el output de Mudae
         kakera = int(match.group(2).replace(".", ""))
+        lista_tuplas.append((user_id, kakera))
 
-        # [OPTIMIZACIÓN] Esta operación es de carga masiva en el inicio, se ejecuta síncrona
-        # pero como es ejecutada por el Staff en un comando específico, el bloqueo es mínimo.
-        set_balance_instancia(user_id, instancia, kakera)
-        tier = get_tier_info(user_id)
+    registrados = []
+    if lista_tuplas:
+        # 1. Escritura persistente masiva en base de datos de forma asíncrona
+        logs_registrados = await en_hilo(actualizar_balances_lote, lista_tuplas, instancia)
 
-        # Intentamos obtener el nombre del usuario desde Discord
-        miembro = ctx.guild.get_member(user_id)
-        nombre = miembro.display_name if miembro else str(user_id)
+        # 2. Lectura masiva de balances globales de forma asíncrona para cálculo de tiers
+        uids = [u[0] for u in lista_tuplas]
+        balances_globales = await en_hilo(obtener_balances_globales_lote, uids)
 
-        registrados.append(f"{tier['emoji']} **{nombre}** → `{kakera:,}` {instancia.upper()}")
+        # 3. Formateo y clasificación en memoria libre de consultas SQL bloqueantes
+        from config import TIER_CUSPIDE_MIN, TIER_ELITE_MIN, TIER_MEDIO_MIN
+        for user_id, kakera in lista_tuplas:
+            total = balances_globales.get(user_id, 0)
+            if total >= TIER_CUSPIDE_MIN:
+                tier_key = "cuspide"
+            elif total >= TIER_ELITE_MIN:
+                tier_key = "elite"
+            elif total >= TIER_MEDIO_MIN:
+                tier_key = "medio"
+            else:
+                tier_key = "pueblo"
+                
+            tier = TIERS[tier_key]
+
+            # Intentamos obtener el nombre del usuario desde Discord
+            miembro = ctx.guild.get_member(user_id)
+            nombre = miembro.display_name if miembro else str(user_id)
+
+            registrados.append(f"{tier['emoji']} **{nombre}** → `{kakera:,}` {instancia.upper()}")
 
     # Embed de resultado
     embed = discord.Embed(

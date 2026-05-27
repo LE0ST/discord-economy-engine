@@ -280,3 +280,73 @@ def ejecutar_castigo_sql(instancia: str) -> int | None:
     finally:
         if conn:
             conn.close()
+
+
+def actualizar_balances_lote(datos_usuarios: list[tuple[int, int]], instancia: str) -> list[str]:
+    """
+    Actualiza masivamente los balances de una lista de usuarios en una única transacción SQL.
+    datos_usuarios: lista de tuplas (user_id, cantidad)
+    instancia: nombre de la columna ('i1', 'i2', 'i3')
+    """
+    if instancia not in INSTANCIAS:
+        return []
+
+    logs = []
+    conn = None
+    try:
+        conn = _obtener_conexion()
+        cursor = conn.cursor()
+
+        # Inyección segura usando identificadores psycopg2.sql
+        query = sql.SQL("""
+            INSERT INTO usuarios_balances (user_id, {instancia})
+            VALUES (%s, %s)
+            ON CONFLICT (user_id)
+            DO UPDATE SET {instancia} = EXCLUDED.{instancia};
+        """).format(instancia=sql.Identifier(instancia))
+
+        for user_id, cantidad in datos_usuarios:
+            uid = str(user_id)
+            cursor.execute(query, (uid, cantidad))
+            logs.append(f"💾 SQL Upsert masivo exitoso para {uid} en {instancia.upper()} -> {cantidad:,}")
+
+        conn.commit()
+        logging.info(f"💾 Transacción por lote finalizada con éxito. {len(datos_usuarios)} registros guardados en {instancia.upper()}.")
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logging.error(f"❌ Error al ejecutar actualización por lote en SQL: {e}")
+        raise e
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+
+    return logs
+
+
+def obtener_balances_globales_lote(user_ids: list[int]) -> dict[int, int]:
+    """
+    Obtiene los balances globales de una lista de usuarios en una única consulta SQL.
+    """
+    if not user_ids:
+        return {}
+        
+    uids = [str(uid) for uid in user_ids]
+    conn = _obtener_conexion()
+    cursor = conn.cursor()
+    
+    # Usamos placeholders dinámicos para evitar inyección en la lista
+    placeholders = ", ".join(["%s"] * len(uids))
+    query = f"SELECT user_id, (COALESCE(i1, 0) + COALESCE(i2, 0) + COALESCE(i3, 0)) FROM usuarios_balances WHERE user_id IN ({placeholders});"
+    
+    try:
+        cursor.execute(query, tuple(uids))
+        filas = cursor.fetchall()
+        return {int(row[0]): row[1] for row in filas}
+    except Exception as e:
+        logging.error(f"Error en obtener_balances_globales_lote: {e}")
+        return {}
+    finally:
+        cursor.close()
+        conn.close()
