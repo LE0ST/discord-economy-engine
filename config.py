@@ -9,39 +9,42 @@ load_dotenv()
 
 DEV_MODE = os.getenv("ENV") == "dev"
 
+def _get_env_id(key: str, default: int = 0) -> int:
+    """Parsea un ID numérico de Discord desde las variables de entorno de forma segura."""
+    val = os.getenv(key)
+    if val and val.strip().isdigit():
+        return int(val.strip())
+    return default
+
 # =========================
 # CANALES
 # =========================
+if DEV_MODE:
+    CANAL_I1_ID = _get_env_id("DEV_CANAL_I1_ID", _get_env_id("CANAL_I1_ID", 0))
+    CANAL_I2_ID = _get_env_id("DEV_CANAL_I2_ID", _get_env_id("CANAL_I2_ID", 0))
+    CANAL_I3_ID = _get_env_id("DEV_CANAL_I3_ID", _get_env_id("CANAL_I3_ID", 0))
+else:
+    CANAL_I1_ID = _get_env_id("CANAL_I1_ID", 0)
+    CANAL_I2_ID = _get_env_id("CANAL_I2_ID", 0)
+    CANAL_I3_ID = _get_env_id("CANAL_I3_ID", 0)
 
-CANALES_EVENTOS = (
-    [
-        100000000000000018,
-        100000000000000019,
-        100000000000000011   
-    ]
-    if DEV_MODE else
-    [
-        100000000000000017,
-        100000000000000016,
-        100000000000000020
-    ]
-)
+CANALES_EVENTOS = [c for c in (CANAL_I1_ID, CANAL_I2_ID, CANAL_I3_ID) if c != 0]
+
+MAPA_CANAL_A_INSTANCIA = {
+    CANAL_I1_ID: "i1",
+    CANAL_I2_ID: "i2",
+    CANAL_I3_ID: "i3",
+}
 
 # =========================
 # ROLES
 # =========================
-
-ROL_AVISO_ID = (
-    100000000000000021         
-    if DEV_MODE else
-    100000000000000014
-)
-
-ROL_STAFF_ID = (
-    100000000000000013         
-    if DEV_MODE else
-    100000000000000015
-)
+if DEV_MODE:
+    ROL_AVISO_ID = _get_env_id("DEV_ROL_AVISO_ID", _get_env_id("ROL_AVISO_ID", 0))
+    ROL_STAFF_ID = _get_env_id("DEV_ROL_STAFF_ID", _get_env_id("ROL_STAFF_ID", 0))
+else:
+    ROL_AVISO_ID = _get_env_id("ROL_AVISO_ID", 0)
+    ROL_STAFF_ID = _get_env_id("ROL_STAFF_ID", 0)
 
 # =========================
 # TIEMPOS DE ESPERA (REDUCIDOS)
@@ -53,14 +56,10 @@ TIEMPO_MAX = 20    if DEV_MODE else 10800  # dev: 20s  | prod: 3.0 horas
 # ESTÉTICA
 # =========================
 
-FOOTER_TEXT  = "Copyright (©) Casino Club"
-FOOTER_ICON  = "https://i.imgur.com/ytopJtE.gif"
-EMOJI_KAKERA = "<:ka_amarillo:100000000000000010>"
+FOOTER_TEXT  = os.getenv("FOOTER_TEXT", "Copyright (©) Casino Club")
+FOOTER_ICON  = os.getenv("FOOTER_ICON", "https://i.imgur.com/ytopJtE.gif")
+EMOJI_KAKERA = os.getenv("EMOJI_KAKERA", "🪙")
 
-
-# Evita que Pylance marque los constantes como "no accedidas" al analizarlas localmente.
-# `__all__` debería ser suficiente para exportarlas, pero algunos analizadores siguen
-# mostrando la advertencia si no detectan uso interno; esta tupla cuenta como uso.
 _ = (FOOTER_TEXT, FOOTER_ICON, EMOJI_KAKERA)
 
 # =========================
@@ -79,8 +78,7 @@ SOLO_MAX_K      = 1200
 # =========================
 # SISTEMA ANTI-MONOPOLIO (4 TIERS ADAPTATIVOS)
 # =========================
-# Ajustamos los mínimos para expandir la clase media y capturar la oligarquía real
-TIER_CUSPIDE_MIN = 300_000  # Solo los monopolistas absolutos (PlayerOne y PlayerTwo)
+TIER_CUSPIDE_MIN = 300_000  # Nivel Cúspide: grandes acumuladores de riqueza
 TIER_ELITE_MIN   = 120_000  # Jugadores muy activos en el clúster
 TIER_MEDIO_MIN   =  40_000  # El piso del jugador promedio activo
                              # < 40k → Pueblo / Casuales / Inactivos
@@ -95,6 +93,10 @@ MULTIPLICADOR_NEUTRO  = 1.00  # Sin registro → Sin modificaciones (Evita abuso
 # Lista pública de símbolos exportados — ayuda a linters/analizadores estáticos
 __all__ = [
     "CANALES_EVENTOS",
+    "CANAL_I1_ID",
+    "CANAL_I2_ID",
+    "CANAL_I3_ID",
+    "MAPA_CANAL_A_INSTANCIA",
     "ROL_AVISO_ID",
     "ROL_STAFF_ID",
     "TIEMPO_MIN",

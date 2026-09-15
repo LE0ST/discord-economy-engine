@@ -19,7 +19,8 @@ from config  import (
     DUELO_MIN_K, DUELO_MAX_K,
     SOLO_MIN_K, SOLO_MAX_K,
     TIEMPO_MIN, TIEMPO_MAX,
-    DEV_MODE
+    DEV_MODE,
+    MAPA_CANAL_A_INSTANCIA
 )
 from economy import aplicar_impuesto_adaptativo, get_tier_info, TIERS
 from events  import TODOS_LOS_EVENTOS, EVENTOS_SIMPLES, EVENTO_MAZMORRA, EVENTO_COBRADOR, EVENTO_MIMICO
@@ -74,20 +75,6 @@ eventos_iniciados = False
 # HELPERS
 # =========================
 
-# Mapeador estricto para detectar en qué entorno se ejecutó el evento automático
-MAPA_CANAL_A_INSTANCIA = (
-    {
-        100000000000000018: "i1",
-        100000000000000019: "i2",
-        100000000000000011: "i3"
-    }
-    if DEV_MODE else
-    {
-        100000000000000017: "i1",
-        100000000000000016: "i2",
-        100000000000000020: "i3"
-    }
-)
 
 def obtener_codigo_instancia(canal_id: int) -> str:
     """Devuelve 'i1', 'i2' o 'i3' según el canal, defaltea a 'i1' si es manual."""
@@ -642,6 +629,10 @@ async def sistema_eventos():
             else:
                 logging.info(f"⏳ Próximo evento en {round(tiempo_espera / 3600, 2)} horas")
             await asyncio.sleep(tiempo_espera)
+            if not CANALES_EVENTOS:
+                logging.warning("⚠️ No hay canales de eventos configurados en CANALES_EVENTOS. Esperando...")
+                await asyncio.sleep(60)
+                continue
 
             canal_id = random.choice(CANALES_EVENTOS)
             canal    = await obtener_canal(canal_id)
@@ -706,7 +697,7 @@ async def set_instancia(ctx, instancia: str):
     if not lineas:
         await ctx.send(
             f"⚠️ No se encontraron datos. Pega la lista de Mudae debajo del comando.\n"
-            f"Ejemplo:\n```mu!setinstancia i1\n PlayerOne (100000000000000012) - 37.557 / 144.807```",
+            f"Ejemplo:\n```mu!setinstancia i1\n PlayerOne (111122223333444455) - 37.557 / 144.807```",
             delete_after=15
         )
         return
@@ -822,7 +813,7 @@ async def set_balance(ctx, miembro: discord.Member, instancia: str, cantidad: in
     """
     Actualiza el balance de una instancia específica de un usuario.
     Uso: mu!setbalance @usuario <i1|i2|i3> <cantidad>
-    Ejemplo: mu!setbalance @PlayerOne i1 144577
+    Ejemplo: mu!setbalance @usuario i1 144577
     """
     if instancia not in INSTANCIAS:
         await ctx.send(
