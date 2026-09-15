@@ -19,15 +19,16 @@ except ImportError as exc:
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    logging.error("❌ ERROR CRÍTICO: No se encontró DATABASE_URL en las variables de entorno.")
-    raise ValueError("DATABASE_URL faltante")
-
 INSTANCIAS = ("i1", "i2", "i3")
+
 
 def _obtener_conexion():
     """Crea y devuelve una conexión fresca a la base de datos PostgreSQL."""
-    return psycopg2.connect(DATABASE_URL)
+    db_url = os.getenv("DATABASE_URL") or DATABASE_URL
+    if not db_url:
+        logging.error("❌ ERROR CRÍTICO: No se encontró DATABASE_URL en las variables de entorno.")
+        raise ValueError("DATABASE_URL faltante")
+    return psycopg2.connect(db_url)
 
 
 def cargar_balances():

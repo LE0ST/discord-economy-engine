@@ -42,3 +42,9 @@ Desktop.ini
 
 # Temporary scratch and logs
 *.log
+
+# Local databases and dumps
+*.sqlite
+*.sqlite3
+*.db
+*.dump

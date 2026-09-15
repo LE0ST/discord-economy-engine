@@ -895,14 +895,19 @@ async def on_ready():
 # INICIO
 # =========================
 
-cargar_balances()
+def main():
+    cargar_balances()
 
-t = Thread(target=run)
-t.daemon = True
-t.start()
+    t = Thread(target=run)
+    t.daemon = True
+    t.start()
 
-token = os.getenv("TOKEN")
-if token is None:
-    raise RuntimeError("Environment variable TOKEN is required")
+    token = os.getenv("TOKEN")
+    if token is None:
+        raise RuntimeError("Environment variable TOKEN is required")
 
-bot.run(token)
+    bot.run(token)
+
+
+if __name__ == "__main__":
+    main()
