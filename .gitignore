@@ -1,0 +1,44 @@
+# Environments and Secrets
+.env
+.env.*
+!.env.example
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python packaging & distribution
+build/
+dist/
+*.egg-info/
+eggs/
+
+# Testing and Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Operating System Files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary scratch and logs
+*.log
