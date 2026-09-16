@@ -251,8 +251,8 @@ pytest -v
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/LE0ST/AldeanoGremioRender.git
-cd AldeanoGremioRender
+git clone https://github.com/LE0ST/discord-economy-engine.git
+cd discord-economy-engine
 ```
 
 ### 2. Set Up a Virtual Environment
