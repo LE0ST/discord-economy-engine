@@ -318,20 +318,36 @@ pytest -v
 
 ## 📸 Screenshots & Demonstrations
 
-<!--
-TODO: Add 2-4 anonymized screenshots demonstrating:
-1. An economy breakdown embed (`mu!balance`).
-2. An interactive raid outcome with receipt details (`EVENTO_MAZMORRA`).
-3. An administrative batch sync result (`mu!setinstancia`).
-4. An interactive minigame prompt (e.g., Mimic arithmetic challenge or Tax Collector).
-Ensure all screenshots crop out private server names, user IDs, or personal chat history before publication.
--->
+The following historical captures from the 2026 private community companion deployment illustrate the live Discord interface, multi-instance balance querying, and the asynchronous event lifecycle.
 
-| Feature | Visual Demonstration | Description |
-| :--- | :---: | :--- |
-| **Economy Receipt** | *[Placeholder: Screenshot of `mu!balance` embed]* | Displays instance breakdown, total global wealth, and active tier modifier |
-| **Dungeon Raid Resolution** | *[Placeholder: Screenshot of Raid results]* | Shows cooperative prize division, individual tax deductions, and Fortune procs |
-| **Interactive Minigame** | *[Placeholder: Screenshot of Mimic/Tax event]* | Demonstrates real-time reaction/puzzle prompts in Discord chat |
+### Economy Across Multiple Instances
+
+![Multi-Instance Economy Balance](docs/images/economy-balance.png)
+
+- **Balance Query (`mu!balance`)**: Queries PostgreSQL to retrieve a user's local balances across configured instances (`I1`, `I2`, `I3`) and calculates their aggregate global wealth (here totaling `348,804` Kakera).
+- **Tier Evaluation**: Identifies the user's economic standing based on global thresholds (`Cúspide` tier for `>= 300,000` Kakera) and displays the active customs tax rate of `35%` (effective multiplier `x0.65`) applied to incoming rewards.
+
+### Cooperative Dungeon Raid
+
+The raid demonstrates an end-to-end multi-user interaction flow—from initial asynchronous registration to dynamic reward calculation:
+
+![Cooperative Dungeon Raid - Event Announcement](docs/images/dungeon-raid-start.png)
+
+- **Event Announcement & Registration**: The background task dispatches `EVENTO_MAZMORRA` to designated channels. Users register by reacting with `⚔️`. The event engine asynchronously tallies responses and dynamically selects the game mode based on participant count (solo mission for 1 adventurer, 1v1 duel for 2, or cooperative raid for 3 or more).
+
+![Cooperative Dungeon Raid - Event Resolution](docs/images/dungeon-raid-resolution.png)
+
+- **Group Division & Adaptive Modifiers**: A group of 4 adventurers divides a total prize pool of `6,720` Kakera (`1,680` base each). Each payout is evaluated individually through `aplicar_impuesto_adaptativo()`:
+  - **Debuff Enforcement**: Two participants cursed with Clumsiness (`maldito_hasta`) fail the 50% sabotage roll, dropping their payout to `0 KA` and consuming a curse charge.
+  - **Neutral & Subsidized Payouts**: An unpenalized player receives the full base amount, while an eligible participant receives a `+15%` subsidized rate (`1,932` KA).
+  - **Buff Generation**: A participant receives a Fortune Blessing (`+1 Carga de Fortuna`) stored in the database for upcoming events.
+
+### Real-Time Tax Collector Minigame
+
+![Tax Collector Interactive Minigame](docs/images/tax-collector-minigame.png)
+
+- **Interactive Verification (`EVENTO_COBRADOR`)**: Spawns an urgent challenge requiring players to submit a randomly generated 5-character alphanumeric bribe code (`RPMCR`) within a 45-second countdown timer.
+- **Message Listener & Timeout Handling**: Uses `bot.wait_for('message')` with channel and content predicates to validate chat messages asynchronously. The first player to respond successfully averts the server fine and claims a bounty reward.
 
 ---
 
